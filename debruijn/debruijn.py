@@ -15,6 +15,7 @@
 
 import argparse
 import os
+import pickle
 import sys
 import networkx as nx
 import matplotlib
@@ -70,20 +71,36 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    pass
-
+    with open(fastq_file, "r") as file_in:
+        line = file_in.readline()
+        while line != "":
+            line = file_in.readline()
+            yield line.strip()
+            file_in.readline()
+            file_in.readline()
+            file_in.readline()
 
 def cut_kmer(read, kmer_size):
-    pass
+    nb_iter = len(read) - (kmer_size-1)
+    for i in range(nb_iter):
+        yield read[i:i+kmer_size]
 
 
 def build_kmer_dict(fastq_file, kmer_size):
-    pass
+    read = "".join(list(read_fastq(fastq_file)))
+    list_kmer = cut_kmer(read, kmer_size)
+    kmer_dict = {}
 
+    for kmer in list_kmer:
+        kmer_dict[kmer] = kmer_dict.get(kmer,0)+1
+
+    return kmer_dict
 
 def build_graph(kmer_dict):
-    pass
-
+    digraph = nx.DiGraph()
+    for kmer, weight in kmer_dict.items():
+        digraph.add_edge(kmer[:-1], kmer[1:], weight=weight)
+    return digraph
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     pass
