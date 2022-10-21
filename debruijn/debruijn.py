@@ -17,6 +17,7 @@ import argparse
 import os
 import pickle
 import sys
+import textwrap
 import networkx as nx
 import matplotlib
 from operator import itemgetter
@@ -129,16 +130,40 @@ def solve_out_tips(graph, ending_nodes):
     pass
 
 def get_starting_nodes(graph):
-    pass
+    starting_nodes =[]
+    for node in graph:
+        pred = list(graph.predecessors(node))
+        if not(pred):
+            starting_nodes.append(node)
+    return starting_nodes
 
 def get_sink_nodes(graph):
-    pass
+    sink_nodes =[]
+    for node in graph:
+        pred = list(graph.successors(node))
+        if not(pred):
+            sink_nodes.append(node)
+    return sink_nodes
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
+    contigs = []
+    for start in starting_nodes:
+        for end in ending_nodes:
+            if nx.has_path(graph, start, end):
+                seq = ""
+                for path in nx.all_simple_paths(graph, start, end):
+                    seq += path[0]
+                    for node in path[1:]:
+                        seq += node[-1]
+                    contigs.append((seq, len(seq)))
+    return contigs
 
 def save_contigs(contigs_list, output_file):
-    pass
+    with open(output_file,"wt") as file:
+        for i,contig in enumerate(contigs_list):
+            seq = contig[0]
+            len = contig[1]
+            file.write(f">contig_{i} len={len}\n{textwrap.fill(seq)}\n")
 
 
 def fill(text, width=80):
