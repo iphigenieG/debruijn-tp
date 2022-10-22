@@ -104,24 +104,69 @@ def build_graph(kmer_dict):
     return digraph
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
-    pass
-
-def std(data):
-    pass
-
+    for path in path_list:
+        if delete_entry_node and delete_sink_node:
+            graph.remove_nodes_from(path)
+        elif delete_entry_node and delete_sink_node == False:
+            graph.remove_nodes_from(path[:-1])
+        elif delete_entry_node == False and delete_sink_node:
+            graph.remove_nodes_from(path[1:])
+        else:
+            graph.remove_nodes_from(path[1:-1])
+    return graph
 
 def select_best_path(graph, path_list, path_length, weight_avg_list, 
                      delete_entry_node=False, delete_sink_node=False):
-    pass
+    std_avg_weight = statistics.stdev(weight_avg_list)
+    if std_avg_weight > 0 :
+        best_path = weight_avg_list.index(max(weight_avg_list))
+    else :
+        std_len = statistics.stdev(path_length)
+        if std_len > 0:
+            best_path = path_length.index(max(path_length))
+        else:
+            best_path = randint(len(path_list)-1)
+    paths_to_remove = path_list[:best_path]+path_list[best_path+1:]
+    remove_paths(graph,paths_to_remove,delete_entry_node,delete_sink_node)
+    return graph        
 
 def path_average_weight(graph, path):
-    pass
+    """Compute the weight of a path"""
+    return statistics.mean([d["weight"] for (u,v,d) in graph.subgraph(path).edges(data=True)])
 
 def solve_bubble(graph, ancestor_node, descendant_node):
-    pass
+    path_list = list(nx.all_simple_paths(graph, source = ancestor_node, target = descendant_node))
+
+    weight_avg_list = []
+    path_length = []
+
+    for path in path_list:
+        weight_avg_list.append(path_average_weight(graph, path))
+        path_length.append(len(path))
+
+    return select_best_path(graph, path_list, path_length, weight_avg_list, 
+                     delete_entry_node=False, delete_sink_node=False)
 
 def simplify_bubbles(graph):
-    pass
+    bubble = False 
+    for node in graph:
+        list_preds = list(graph.predecessors(node))
+        if len(list_preds) > 1:
+            for i,first_pred in enumerate(list_preds):
+                list_second_preds = list_preds[:i]+list_preds[i+1:]
+                for second_pred in list_second_preds:
+                    ancestor_node = nx.lowest_common_ancestor(graph, first_pred, second_pred)
+                    if ancestor_node:
+                        bubble = True
+                        break
+        if bubble == True:
+            break
+   # La simplification ayant pour conséquence de supprimer des noeuds du hash
+   # Une approche récursive est nécessaire avec networkx
+    if bubble:
+        graph = simplify_bubbles(solve_bubble(graph,ancestor_node, node))
+
+    return graph
 
 def solve_entry_tips(graph, starting_nodes):
     pass
