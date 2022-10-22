@@ -172,7 +172,35 @@ def solve_entry_tips(graph, starting_nodes):
     pass
 
 def solve_out_tips(graph, ending_nodes):
-    pass
+    path_list = []
+    for i,first_node in enumerate(ending_nodes):
+        other_ending_nodes = ending_nodes[:i]+ending_nodes[i+1:]
+        for second_node in other_ending_nodes:
+            ancestor_node = nx.lowest_common_ancestor(graph,first_node,second_node)
+            if ancestor_node:
+                gen = nx.all_simple_paths(graph,source=ancestor_node,target=first_node)
+                first_path = [x for x in gen][0]
+                path_list.append(first_path)
+                gen = nx.all_simple_paths(graph,source=ancestor_node,target=second_node)
+                second_path = [x for x in gen][0]
+                path_list.append(second_path)
+                break
+        if path_list:
+            break
+    
+    if path_list:
+        weight_avg_list = []
+        path_length = []
+
+        for path in path_list:
+            weight_avg_list.append(path_average_weight(graph, path))
+            path_length.append(len(path))
+
+        graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
+                        delete_entry_node=False, delete_sink_node=True)
+        ending_nodes = get_sink_nodes(graph)
+        graph = solve_out_tips(graph,ending_nodes)
+    return graph
 
 def get_starting_nodes(graph):
     starting_nodes =[]
