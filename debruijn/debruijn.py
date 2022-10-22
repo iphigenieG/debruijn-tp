@@ -169,7 +169,35 @@ def simplify_bubbles(graph):
     return graph
 
 def solve_entry_tips(graph, starting_nodes):
-    pass
+    path_list = []
+    pred_start = 0 
+    for node in graph:
+        list_preds = list(graph.predecessors(node))
+        if len(list_preds) > 1:
+            for start_node in starting_nodes:
+                path = list(nx.all_simple_paths(graph,source=start_node,target=node))[0]
+                if path:
+                    pred_start += 1
+                    path_list.append(path)
+                    if pred_start == 2 :
+                        break
+        if pred_start == 2:
+            break
+    
+    if pred_start == 2 :
+        weight_avg_list = []
+        path_length = []
+
+        for path in path_list:
+            print(path)
+            weight_avg_list.append(path_average_weight(graph, path))
+            path_length.append(len(path))
+
+        graph = select_best_path(graph, path_list, path_length, weight_avg_list, 
+                        delete_entry_node=True, delete_sink_node=False)
+        ending_nodes = get_starting_nodes(graph)
+        graph = solve_entry_tips(graph,ending_nodes)
+    return graph
 
 def solve_out_tips(graph, ending_nodes):
     path_list = []
@@ -178,11 +206,9 @@ def solve_out_tips(graph, ending_nodes):
         for second_node in other_ending_nodes:
             ancestor_node = nx.lowest_common_ancestor(graph,first_node,second_node)
             if ancestor_node:
-                gen = nx.all_simple_paths(graph,source=ancestor_node,target=first_node)
-                first_path = [x for x in gen][0]
+                first_path = list(nx.all_simple_paths(graph,source=ancestor_node,target=first_node))[0]
                 path_list.append(first_path)
-                gen = nx.all_simple_paths(graph,source=ancestor_node,target=second_node)
-                second_path = [x for x in gen][0]
+                second_path = list(nx.all_simple_paths(graph,source=ancestor_node,target=second_node))[0]
                 path_list.append(second_path)
                 break
         if path_list:
